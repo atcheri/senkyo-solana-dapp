@@ -9,6 +9,12 @@ pub mod senkyo {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        let counter = &mut ctx.accounts.counter;
+        counter.count = 0;
+
+        let registration = &mut ctx.accounts.registrations;
+        counter.count = 0;
+
         Ok(())
     }
 }
@@ -27,6 +33,15 @@ pub struct Initialize<'info> {
     )]
     pub counter: Account<'info, Counter>,
 
+    #[account(
+        init,
+        payer = user,
+        space = ANCHOR_DISCRIMINATOR_SIZE + 8,
+        seed = [b"registrations"],
+        bump
+    )]
+    pub registrations: Account<'info, Registration>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -34,3 +49,9 @@ pub struct Initialize<'info> {
 pub struct Counter {
     pub count: u64,
 }
+
+#[account]
+pub struct Registration {
+    pub count: u64,
+}
+
