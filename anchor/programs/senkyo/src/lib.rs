@@ -18,24 +18,33 @@ pub mod senkyo {
         Ok(())
     }
 
-    pub fn creat_poll(ctx: Context<CreatePoll>, description: String, start: u64, end: u64) -> Result<()> {
+    pub fn creat_poll(
+        ctx: Context<CreatePoll>,
+        description: String,
+        start: u64,
+        end: u64
+    ) -> Result<()> {
         if start > end {
-            return Err(ErrorCode::InvalidDate.into())
+            return Err(ErrorCode::InvalidDate.into());
         }
 
         let counter = &mut ctx.accounts.counter;
         counter.count += 1;
         let poll = &mut ctx.accounts.poll;
-        poll.id =  counter.count;
+        poll.id = counter.count;
         poll.description = description;
         poll.start = start;
         poll.end = end;
-        poll.candidates = 0;        
+        poll.candidates = 0;
 
         Ok(())
     }
 
-    pub fn register_candidate(ctx: Context<RegistreCandidate>, poll_id: u64, name: String) -> Result<()> {
+    pub fn register_candidate(
+        ctx: Context<RegistreCandidate>,
+        poll_id: u64,
+        name: String
+    ) -> Result<()> {
         let poll = &mut ctx.accounts.poll;
 
         if poll.id != poll_id {
@@ -50,10 +59,37 @@ pub mod senkyo {
         let registrations = &mut ctx.accounts.registrations;
         registrations.count += 1;
 
-        candidate.id = registrations.count;
+        candidate.cid = registrations.count;
         candidate.poll_id = poll_id;
         candidate.name = name;
         candidate.has_registered = true;
+
+        Ok(())
+    }
+
+    pub fn vote(ctx: Context<VoteCandidate>, poll_id: u64, cid: u64) -> Result<()> {
+        let voter = &mut ctx.accounts.voter;
+        let candidate = &mut ctx.accounts.candidate;
+        let poll = &mut ctx.accounts.poll;
+
+        if !candidate.has_registered || candidate.poll_id != poll_id {
+            return Err(ErrorCode::CandidateNotRegistered.into());
+        }
+
+        if voter.has_voted {
+            return Err(ErrorCode::VoterAlreadyVoted.into());
+        }
+
+        let current_timestamp = Clock::get()?.unix_timestamp as u64;
+        if current_timestamp < poll.start || current_timestamp > poll.end {
+            return Err(ErrorCode::PollNotActive.into());
+        }
+
+        voter.poll_id = poll_id;
+        voter.cid = cid;
+        voter.has_voted = true;
+
+        candidate.votes += 1;
 
         Ok(())
     }
@@ -109,12 +145,20 @@ pub struct Poll {
 #[account]
 #[derive(InitSpace)]
 pub struct Candidate {
-    pub id: u64,
+    pub cid: u64,
     pub poll_id: u64,
     #[max_len(32)]
     pub name: String,
     pub votes: u64,
     pub has_registered: bool,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct Voter {
+    pub cid: u64, // reference to the candidate the voter voted for
+    pub poll_id: u64, // reference to the poll
+    pub has_voted: bool,
 }
 
 #[derive(Accounts)]
@@ -126,8 +170,8 @@ pub struct CreatePoll<'info> {
         init,
         payer = user,
         space = ANCHOR_DISCRIMINATOR_SIZE + Poll::INIT_SPACE,
-        seeds = [(counter.count + 1).to_le_bytes().as_ref()],       
-         bump,
+        seeds = [(counter.count + 1).to_le_bytes().as_ref()],
+        bump
     )]
     pub poll: Account<'info, Poll>,
 
@@ -158,31 +202,66 @@ pub struct RegistreCandidate<'info> {
         init,
         payer = user,
         space = ANCHOR_DISCRIMINATOR_SIZE + Candidate::INIT_SPACE,
-        seeds = [(counter.count + 1).to_le_bytes().as_ref()],       
-         bump,
+        seeds = [poll_id.to_le_bytes().as_ref(), (registrations.count + 1).to_le_bytes().as_ref()],
+        bump
     )]
     pub candidate: Account<'info, Candidate>,
 
     #[account(mut)]
     pub counter: Account<'info, Counter>,
 
-    #[account(
-        seeds = [b"registrations"],
-        bump
-    )]
+    #[account(seeds = [b"registrations"], bump)]
     pub registrations: Account<'info, Registration>,
 
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+#[instruction(poll_id: u64, cid: u64)]
+pub struct VoteCandidate<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
 
+    #[account(
+        mut,
+        seeds= [poll_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub poll: Account<'info, Poll>,
+
+    #[account(
+        mut,
+        seeds = [poll_id.to_le_bytes().as_ref(), cid.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub candidate: Account<'info, Candidate>,
+
+    #[account(
+        init,
+        payer = user,
+        space = ANCHOR_DISCRIMINATOR_SIZE + 25,
+        seeds = [b"voter", poll_id.to_le_bytes().as_ref(), user.key().as_ref()],
+        bump
+    )]
+    pub voter: Account<'info, Voter>,
+
+    pub system_program: Program<'info, System>,
+}
 
 #[error_code]
 pub enum ErrorCode {
     #[msg("Start date cannot be greater than End date")]
     InvalidDate,
-    #[msg("Poll not found")]
-    PollDoesNotExist,
     #[msg("Candidate is already registered")]
     CandidateAlreadyRegistered,
+    #[msg("Voter cannot vote twice")]
+    VoterAlreadyVoted,
+    #[msg("Candidate is not in the poll")]
+    CandidateNotRegistered,
+    #[msg("Poll not found")]
+    PollDoesNotExist,
+    #[msg("Poll not currently active")]
+    PollNotActive,
+    #[msg("Poll counter cannot be less than zero")]
+    PollCounterUnderflow,
 }
