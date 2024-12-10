@@ -8,6 +8,9 @@ skip-lint = false
 [programs.localnet]
 senkyo = "CLDgc2Q7uUP7hqhvxkbCAWrFK88qNNmcXqusQUR3dhVp"
 
+[programs.devnet]
+senkyo = "CLDgc2Q7uUP7hqhvxkbCAWrFK88qNNmcXqusQUR3dhVp"
+
 [registry]
 url = "https://api.apr.dev"
 
