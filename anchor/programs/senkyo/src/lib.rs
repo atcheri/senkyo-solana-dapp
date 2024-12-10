@@ -18,7 +18,7 @@ pub mod senkyo {
         Ok(())
     }
 
-    pub fn creat_poll(
+    pub fn create_poll(
         ctx: Context<CreatePoll>,
         description: String,
         start: u64,
