@@ -1,8 +1,14 @@
 use anchor_lang::prelude::*;
 
-declare_id!("CLDgc2Q7uUP7hqhvxkbCAWrFK88qNNmcXqusQUR3dhVp");
+pub mod constants;
+pub mod errors;
+pub mod states;
 
-pub const ANCHOR_DISCRIMINATOR_SIZE: usize = 8;
+pub use constants::ANCHOR_DISCRIMINATOR_SIZE;
+pub use errors::ErrorCode::*;
+pub use states::*;
+
+declare_id!("CLDgc2Q7uUP7hqhvxkbCAWrFK88qNNmcXqusQUR3dhVp");
 
 #[program]
 pub mod senkyo {
@@ -25,7 +31,7 @@ pub mod senkyo {
         end: u64
     ) -> Result<()> {
         if start > end {
-            return Err(ErrorCode::InvalidDate.into());
+            return Err(InvalidDate.into());
         }
 
         let counter = &mut ctx.accounts.counter;
@@ -48,12 +54,12 @@ pub mod senkyo {
         let poll = &mut ctx.accounts.poll;
 
         if poll.id != poll_id {
-            return Err(ErrorCode::PollDoesNotExist.into());
+            return Err(PollDoesNotExist.into());
         }
 
         let candidate = &mut ctx.accounts.candidate;
         if candidate.has_registered {
-            return Err(ErrorCode::CandidateAlreadyRegistered.into());
+            return Err(CandidateAlreadyRegistered.into());
         }
 
         let registrations = &mut ctx.accounts.registrations;
@@ -73,16 +79,16 @@ pub mod senkyo {
         let poll = &mut ctx.accounts.poll;
 
         if !candidate.has_registered || candidate.poll_id != poll_id {
-            return Err(ErrorCode::CandidateNotRegistered.into());
+            return Err(CandidateNotRegistered.into());
         }
 
         if voter.has_voted {
-            return Err(ErrorCode::VoterAlreadyVoted.into());
+            return Err(VoterAlreadyVoted.into());
         }
 
         let current_timestamp = Clock::get()?.unix_timestamp as u64;
         if current_timestamp < poll.start || current_timestamp > poll.end {
-            return Err(ErrorCode::PollNotActive.into());
+            return Err(PollNotActive.into());
         }
 
         voter.poll_id = poll_id;
@@ -119,46 +125,6 @@ pub struct Initialize<'info> {
     pub registrations: Account<'info, Registration>,
 
     pub system_program: Program<'info, System>,
-}
-
-#[account]
-pub struct Counter {
-    pub count: u64,
-}
-
-#[account]
-pub struct Registration {
-    pub count: u64,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct Poll {
-    pub id: u64,
-    #[max_len(280)]
-    pub description: String,
-    pub start: u64,
-    pub end: u64,
-    pub candidates: u64,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct Candidate {
-    pub cid: u64,
-    pub poll_id: u64,
-    #[max_len(32)]
-    pub name: String,
-    pub votes: u64,
-    pub has_registered: bool,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct Voter {
-    pub cid: u64, // reference to the candidate the voter voted for
-    pub poll_id: u64, // reference to the poll
-    pub has_voted: bool,
 }
 
 #[derive(Accounts)]
@@ -246,22 +212,4 @@ pub struct VoteCandidate<'info> {
     pub voter: Account<'info, Voter>,
 
     pub system_program: Program<'info, System>,
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Start date cannot be greater than End date")]
-    InvalidDate,
-    #[msg("Candidate is already registered")]
-    CandidateAlreadyRegistered,
-    #[msg("Voter cannot vote twice")]
-    VoterAlreadyVoted,
-    #[msg("Candidate is not in the poll")]
-    CandidateNotRegistered,
-    #[msg("Poll not found")]
-    PollDoesNotExist,
-    #[msg("Poll not currently active")]
-    PollNotActive,
-    #[msg("Poll counter cannot be less than zero")]
-    PollCounterUnderflow,
 }
