@@ -39,28 +39,11 @@ export default function Page() {
 
   return (
     <div>
-      <h2 className="bg-gray-800 text-white rounded-full px-6 py-2 text-lg font-bold mb-8">
-        List of Polls
-      </h2>
-
-      {!isInitialized && publicKey && (
-        <button
-          onClick={() => alert("Dummy Initialize")}
-          className="bg-gray-800 text-white rounded-full
-          px-6 py-2 text-lg font-bold mb-8"
-        >
-          Initialize
-        </button>
-      )}
-
-      {!publicKey && polls.length < 1 && (
-        <>
-          <h2 className="bg-gray-800 text-white rounded-full px-6 py-2 text-lg font-bold mb-8">
-            List of Polls
-          </h2>
-          <p>We don&apos;t have any polls yet, please connect wallet.</p>
-        </>
-      )}
+      <div className="flex justify-center">
+        <h2 className="mb-8 rounded-full bg-gray-800 px-16 py-4 text-lg font-bold text-white">
+          List of Polls
+        </h2>
+      </div>
 
       <Polls polls={polls} />
     </div>

@@ -14,21 +14,21 @@ type PollsProps = {
 const Polls: FC<PollsProps> = ({ polls }) => {
   if (!polls.length) {
     return (
-      <>
-        <h2 className="bg-gray-800 text-white rounded-full px-6 py-2 text-lg font-bold mb-8">
+      <div>
+        <h2 className="mb-8 rounded-full bg-gray-800 px-6 py-2 text-lg font-bold text-white">
           List of Polls
         </h2>
         <p>We don&apos;t have any polls yet, be the first to create one.</p>
-      </>
+      </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-4/5">
+    <div className="grid grid-cols-1 place-items-center gap-6 md:grid-cols-2 lg:grid-cols-3">
       {polls.map((poll) => (
         <div
           key={poll.publicKey}
-          className="bg-white border border-gray-300 rounded-xl shadow-lg p-6 space-y-4"
+          className="space-y-4 rounded-xl border border-gray-300 bg-white p-6 shadow-lg"
         >
           <h3 className="text-lg font-semibold text-gray-800">
             {poll.description.length > 20
@@ -51,8 +51,7 @@ const Polls: FC<PollsProps> = ({ polls }) => {
           <div className="w-full">
             <Link
               href={`/polls/${poll.publicKey}`}
-              className="bg-black text-white font-bold py-2 px-4 rounded-lg
-                hover:bg-gray-900 transition duration-200 w-full block text-center"
+              className="block w-full rounded-lg bg-black px-4 py-2 text-center font-bold text-white transition duration-200 hover:bg-gray-900"
             >
               View Poll
             </Link>
