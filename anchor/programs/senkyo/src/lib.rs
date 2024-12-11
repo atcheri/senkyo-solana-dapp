@@ -13,7 +13,7 @@ use states::*;
 declare_id!("CLDgc2Q7uUP7hqhvxkbCAWrFK88qNNmcXqusQUR3dhVp");
 
 #[program]
-pub mod votee {
+pub mod senkyo {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
