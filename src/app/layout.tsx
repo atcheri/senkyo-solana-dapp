@@ -4,6 +4,7 @@ import { ReactQueryProvider } from "./react-query-provider";
 import { WalletConnectionProvider } from "@/components/context/WalletConnection";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import Header from "@/components/header";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   title: "senkyo-solana-dapp",
@@ -34,6 +35,7 @@ export default function RootLayout({
             {/* </SolanaProvider> */}
           </ClusterProvider>
         </ReactQueryProvider>
+        <Toaster position="bottom-center" reverseOrder={false} />
       </body>
     </html>
   );

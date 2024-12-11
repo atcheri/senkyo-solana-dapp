@@ -29,7 +29,7 @@ export const WalletConnectionProvider: FC<
       new SolflareWalletAdapter(),
       new TrezorWalletAdapter(),
     ],
-    [network]
+    [network],
   );
 
   const value = {};
@@ -37,7 +37,7 @@ export const WalletConnectionProvider: FC<
   return (
     <WalletConnectionContext.Provider value={value}>
       <ConnectionProvider endpoint={endpoint}>
-        <WalletProvider wallets={wallets}>
+        <WalletProvider wallets={wallets} autoConnect>
           <WalletModalProvider>{children}</WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>
