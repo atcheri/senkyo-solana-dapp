@@ -1,7 +1,6 @@
 import { AnchorProvider, BN, Program, Wallet } from "@coral-xyz/anchor";
 import {
   Connection,
-  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   TransactionSignature,
@@ -18,7 +17,7 @@ export const getSolanaProvider = (
   signTransaction: any,
   sendTransaction: any,
 ): Program<Senkyo> | null => {
-  if (publicKey || !signTransaction) {
+  if (!publicKey || !signTransaction) {
     return null;
   }
 
@@ -64,7 +63,7 @@ export const initalizeTransaction = async (
     programId,
   );
   const [registrationPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("registration")],
+    [Buffer.from("registrations")],
     programId,
   );
 
@@ -110,4 +109,49 @@ export const getCounter = async (program: Program<Senkyo>): Promise<BN> => {
     console.error("faild to retrieve the counter program", error);
     return new BN(-1);
   }
+};
+
+export const createPoll = async (
+  program: Program<Senkyo>,
+  publicKey: PublicKey,
+  nextCount: BN,
+  description: string,
+  start: number,
+  end: number,
+): Promise<TransactionSignature> => {
+  const [counterPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("counter")],
+    programId,
+  );
+  const [pollPda] = PublicKey.findProgramAddressSync(
+    [nextCount.toArrayLike(Buffer, "le", 8)],
+    programId,
+  );
+
+  const startBN = new BN(start);
+  const endBN = new BN(end);
+
+  const tx = await program.methods
+    .createPoll(description, startBN, endBN)
+    .accountsPartial({
+      user: publicKey,
+      counter: counterPda,
+      poll: pollPda,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+
+  const connection = new Connection(
+    program.provider.connection.rpcEndpoint,
+    "confirmed",
+  );
+
+  const blockhash = await connection.getLatestBlockhash();
+  await connection.confirmTransaction({
+    signature: tx,
+    blockhash: blockhash.blockhash,
+    lastValidBlockHeight: blockhash.lastValidBlockHeight,
+  });
+
+  return tx;
 };

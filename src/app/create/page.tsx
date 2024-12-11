@@ -1,35 +1,85 @@
 "use client";
 
 import { NextPage } from "next";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  createPoll,
+  getCounter,
+  getSolanaProvider,
+} from "../services/blockchain";
+import { BN } from "@coral-xyz/anchor";
+import { useWallet } from "@solana/wallet-adapter-react";
+import toast from "react-hot-toast";
 
 const Page: NextPage = () => {
+  const { publicKey, sendTransaction, signTransaction } = useWallet();
+  const [nextCount, setNextCount] = useState<BN>(new BN(0));
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const program = useMemo(() => {
+    if (!publicKey) {
+      return;
+    }
+
+    return getSolanaProvider(publicKey, signTransaction, sendTransaction);
+  }, [publicKey, signTransaction, sendTransaction]);
+
   const [formData, setFormData] = useState({
     description: "",
     startDate: "",
     endDate: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const { description, startDate, endDate } = formData;
+  useEffect(() => {
+    const fetchCounter = async () => {
+      if (!program) {
+        return;
+      }
+      const count = await getCounter(program);
+      setNextCount(count.add(new BN(1)));
+      setIsInitialized(count.gte(new BN(0)));
+    };
 
+    fetchCounter();
+  }, [program]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!program || !isInitialized || !publicKey) return;
+
+    const { description, startDate, endDate } = formData;
     const startTimestamp = new Date(startDate).getTime() / 1000;
     const endTimestamp = new Date(endDate).getTime() / 1000;
 
-    console.log("Poll Details:", {
-      description,
-      startTimestamp,
-      endTimestamp,
-    });
+    await toast.promise(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const tx = await createPoll(
+            program,
+            publicKey,
+            nextCount,
+            description,
+            startTimestamp,
+            endTimestamp,
+          );
 
-    setFormData({
-      description: "",
-      startDate: "",
-      endDate: "",
-    });
+          setFormData({
+            description: "",
+            startDate: "",
+            endDate: "",
+          });
 
-    alert("Poll created successfully!");
+          resolve(tx as any);
+        } catch (error) {
+          reject(error);
+        }
+      }),
+      {
+        loading: "Approve transaction...",
+        success: "Transaction successful",
+        error: "Transaction failed",
+      },
+    );
   };
 
   return (

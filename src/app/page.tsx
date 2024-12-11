@@ -3,7 +3,7 @@
 import { BN } from "@coral-xyz/anchor";
 import Polls from "@/components/polls";
 import { useWallet } from "@solana/wallet-adapter-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
   getCounter,
@@ -40,11 +40,9 @@ const fetchedPolls = [
 ];
 
 export default function Page() {
-  const [isInitialized] = useState(async () => {
-    const counter = await getCounter(await getReadOnlySolanaProvider());
-    return counter.gte(new BN(0));
-  });
+  const [isInitialized, setIsInitialized] = useState(false);
   const { publicKey, signTransaction, sendTransaction } = useWallet();
+  const programReadOnly = useMemo(() => getReadOnlySolanaProvider(), []);
 
   const polls = fetchedPolls.map((p) => ({
     ...p,
@@ -60,8 +58,18 @@ export default function Page() {
     return getSolanaProvider(publicKey, signTransaction, sendTransaction);
   }, [publicKey, signTransaction, sendTransaction]);
 
+  const fetchData = async () => {
+    const count = await getCounter(programReadOnly);
+    setIsInitialized(count.gte(new BN(0)));
+  };
+
+  useEffect(() => {
+    if (!programReadOnly) return;
+    fetchData();
+  }, [programReadOnly]);
+
   const handleInit = async () => {
-    if (!isInitialized && !!publicKey) {
+    if (isInitialized && !!publicKey) {
       return;
     }
 
@@ -73,6 +81,7 @@ export default function Page() {
 
         try {
           await initalizeTransaction(program, publicKey);
+          setIsInitialized(true);
           resolve();
         } catch (error) {
           reject(error);
@@ -80,13 +89,13 @@ export default function Page() {
       }),
       {
         loading: "Approving transaction ...",
-        success: "Transaction succesful",
+        success: "Transaction successful",
         error: "Transaction failed",
       },
     );
   };
 
-  if (!isInitialized && publicKey) {
+  if (!isInitialized && !!publicKey) {
     return (
       <button
         onClick={handleInit}
