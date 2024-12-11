@@ -1,14 +1,20 @@
+import { atom } from "jotai";
 import Link from "next/link";
 import { FC } from "react";
 
+type Poll = {
+  id: number;
+  publicKey: string;
+  description: string;
+  start: string;
+  end: string;
+  candidates: number;
+};
+
+export const pollAtom = atom<Poll | null>(null);
+
 type PollsProps = {
-  polls: {
-    publicKey: string;
-    description: string;
-    start: string;
-    end: string;
-    candidates: number;
-  }[];
+  polls: Poll[];
 };
 
 const Polls: FC<PollsProps> = ({ polls }) => {

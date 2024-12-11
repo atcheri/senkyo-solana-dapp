@@ -5,6 +5,7 @@ import React from "react";
 
 const fetchedPolls = [
   {
+    id: 1,
     publicKey: "DummyPollKey1",
     description: "Favorite Thing about Christmas",
     start: new Date("2024-11-24T01:02:00").getTime(),
@@ -12,6 +13,7 @@ const fetchedPolls = [
     candidates: 2,
   },
   {
+    id: 2,
     publicKey: "DummyPollKey2",
     description: "Best Sport in the World",
     start: new Date("2024-12-01T00:00:00").getTime(),
@@ -19,6 +21,7 @@ const fetchedPolls = [
     candidates: 5,
   },
   {
+    id: 3,
     publicKey: "DummyPollKey3",
     description: "Safest Country in the world",
     start: new Date("2024-12-22T00:00:00").getTime(),
@@ -38,14 +41,12 @@ export default function Page() {
   }));
 
   return (
-    <div>
-      <div className="flex justify-center">
-        <h2 className="mb-8 rounded-full bg-gray-800 px-16 py-4 text-lg font-bold text-white">
-          List of Polls
-        </h2>
-      </div>
+    <>
+      <h2 className="mb-8 self-center rounded-full bg-gray-800 px-16 py-4 text-lg font-bold text-white">
+        List of Polls
+      </h2>
 
       <Polls polls={polls} />
-    </div>
+    </>
   );
 }

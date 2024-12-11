@@ -29,7 +29,7 @@ export default function RootLayout({
             {/* <SolanaProvider> */}
             <WalletConnectionProvider network={WalletAdapterNetwork.Devnet}>
               <Header />
-              {children}
+              <main className="flex flex-col justify-center">{children}</main>
             </WalletConnectionProvider>
             {/* </SolanaProvider> */}
           </ClusterProvider>
