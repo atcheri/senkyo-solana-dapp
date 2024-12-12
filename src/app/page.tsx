@@ -18,7 +18,6 @@ export default function Page() {
   const { publicKey, signTransaction, sendTransaction } = useWallet();
   const programReadOnly = useMemo(() => getReadOnlySolanaProvider(), []);
   const [polls, setPolls] = useState<Poll[]>([]);
-  console.log("polls:", polls);
 
   const program = useMemo(() => {
     if (!publicKey) {

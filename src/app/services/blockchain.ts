@@ -159,17 +159,34 @@ export const createPoll = async (
 
 export const fetchPolls = async (program: Program<Senkyo>): Promise<Poll[]> => {
   const polls = await program.account.poll.all();
-  return formatPoll(polls);
+  return formatPolls(polls);
 };
 
-const formatPoll = (polls: any[]): Poll[] =>
+const formatPolls = (polls: any[]): Poll[] =>
   polls.map((c: any) => ({
     ...c.account,
-    publicKey: c.publicKey.toBase58(),
-    id: c.account.id.toNumber(),
-    start: formatDate(c.account.start.toNumber() * 1000),
-    end: formatDate(c.account.end.toNumber() * 1000),
-    candidates: c.account.candidates.toNumber(),
+    ...formatPoll(c.account),
   }));
 
 const formatDate = (d: number) => new Date(d).toLocaleDateString();
+
+const formatPoll = (poll: any): Poll => {
+  return {
+    description: poll.description,
+    publicKey: poll.publicKey ? poll.publicKey.toBase58() : "",
+    id: poll.id.toNumber(),
+    start: formatDate(poll.start.toNumber() * 1000),
+    end: formatDate(poll.end.toNumber() * 1000),
+    candidates: poll.candidates.toNumber(),
+  };
+};
+
+export const fetchPollDetails = async (
+  program: Program<Senkyo>,
+  pollAddress: string,
+): Promise<Poll> => {
+  const poll = await program.account.poll.fetch(pollAddress);
+  const formattedPoll = formatPoll(poll);
+
+  return formattedPoll;
+};

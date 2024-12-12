@@ -11,8 +11,6 @@ export type Poll = {
   candidates: number;
 };
 
-export const pollAtom = atom<Poll | null>(null);
-
 type PollsProps = {
   polls: Poll[];
 };
