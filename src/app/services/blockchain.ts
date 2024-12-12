@@ -9,6 +9,7 @@ import { Senkyo } from "anchor/target/types/senkyo";
 
 import idl from "../../../anchor/target/idl/senkyo.json";
 import { Poll } from "@/components/polls";
+import { Candidate } from "@/components/candidate";
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "http://127.0.0.1:8899";
 const programId = new PublicKey(idl.address);
@@ -163,10 +164,12 @@ export const fetchPolls = async (program: Program<Senkyo>): Promise<Poll[]> => {
 };
 
 const formatPolls = (polls: any[]): Poll[] =>
-  polls.map((c: any) => ({
-    ...c.account,
-    ...formatPoll(c.account),
-  }));
+  polls.map((p: any) => {
+    return {
+      ...p.account,
+      ...formatPoll({ ...p.account, publicKey: p.publicKey }),
+    };
+  });
 
 const formatDate = (d: number) => new Date(d).toLocaleDateString();
 
@@ -189,4 +192,32 @@ export const fetchPollDetails = async (
   const formattedPoll = formatPoll(poll);
 
   return formattedPoll;
+};
+
+export const fetchAllCandidates = async (
+  program: Program<Senkyo>,
+  pollAddress: string,
+): Promise<Candidate[]> => {
+  const pollData = await fetchPollDetails(program, pollAddress);
+  if (!pollData) return [];
+
+  const PID = new BN(pollData.id);
+
+  const candidateAccounts = await program.account.candidate.all();
+  const candidates = candidateAccounts.filter((candidate) => {
+    return candidate.account.pollId.eq(PID);
+  });
+
+  return candidates.map(formatCandidate);
+};
+
+const formatCandidate = (candidate: any): Candidate => {
+  return {
+    ...candidate,
+    publicKey: candidate.publicKey.toBase58(), // Convert to string
+    cid: candidate.cid.toNumber(),
+    pollId: candidate.pollId.toNumber(),
+    votes: candidate.votes.toNumber(),
+    name: candidate.name,
+  };
 };

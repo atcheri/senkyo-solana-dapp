@@ -10,6 +10,27 @@ import { useParams } from "next/navigation";
 import React, { useEffect, useMemo } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import { pollAtom } from "./state";
+import { Candidate } from "@/components/candidate";
+import CandidateList from "./components/candidates-list";
+
+const candidates: Candidate[] = [
+  {
+    publicKey: "dummy_public_key_1",
+    cid: 1001,
+    pollId: 101,
+    name: "Candidate A",
+    votes: 0,
+    hasRegistered: false,
+  },
+  {
+    publicKey: "dummy_public_key_2",
+    cid: 1002,
+    pollId: 101,
+    name: "Candidate B",
+    votes: 0,
+    hasRegistered: false,
+  },
+];
 
 export default function PollDetails() {
   const { pollId } = useParams();
@@ -81,13 +102,13 @@ export default function PollDetails() {
           </button>
         )}
 
-        {/* {candidates.length > 0 && (
+        {candidates.length > 0 && (
           <CandidateList
             candidates={candidates}
             pollAddress={poll.publicKey}
             pollId={poll.id}
           />
-        )} */}
+        )}
       </div>
 
       {/* {pollId && <RegCandidate pollId={poll.id} pollAddress={poll.publicKey} />} */}
