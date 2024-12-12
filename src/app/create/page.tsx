@@ -10,11 +10,13 @@ import {
 import { BN } from "@coral-xyz/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const Page: NextPage = () => {
   const { publicKey, sendTransaction, signTransaction } = useWallet();
   const [nextCount, setNextCount] = useState<BN>(new BN(0));
   const [isInitialized, setIsInitialized] = useState(false);
+  const router = useRouter();
 
   const program = useMemo(() => {
     if (!publicKey) {
@@ -80,6 +82,8 @@ const Page: NextPage = () => {
         error: "Transaction failed",
       },
     );
+
+    router.push("/");
   };
 
   return (

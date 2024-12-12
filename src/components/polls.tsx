@@ -2,7 +2,7 @@ import { atom } from "jotai";
 import Link from "next/link";
 import { FC } from "react";
 
-type Poll = {
+export type Poll = {
   id: number;
   publicKey: string;
   description: string;
@@ -20,11 +20,14 @@ type PollsProps = {
 const Polls: FC<PollsProps> = ({ polls }) => {
   if (!polls.length) {
     return (
-      <div>
-        <h2 className="mb-8 rounded-full bg-gray-800 px-6 py-2 text-lg font-bold text-white">
-          List of Polls
-        </h2>
+      <div className="flex flex-col items-center gap-6 self-center">
         <p>We don&apos;t have any polls yet, be the first to create one.</p>
+
+        <Link href={"/create"}>
+          <button className="w-full rounded-lg bg-black px-6 py-3 font-bold text-white transition duration-200 hover:bg-gray-900">
+            Create a poll
+          </button>
+        </Link>
       </div>
     );
   }

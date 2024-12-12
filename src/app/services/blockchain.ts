@@ -8,6 +8,7 @@ import {
 import { Senkyo } from "anchor/target/types/senkyo";
 
 import idl from "../../../anchor/target/idl/senkyo.json";
+import { Poll } from "@/components/polls";
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "http://127.0.0.1:8899";
 const programId = new PublicKey(idl.address);
@@ -155,3 +156,20 @@ export const createPoll = async (
 
   return tx;
 };
+
+export const fetchPolls = async (program: Program<Senkyo>): Promise<Poll[]> => {
+  const polls = await program.account.poll.all();
+  return formatPoll(polls);
+};
+
+const formatPoll = (polls: any[]): Poll[] =>
+  polls.map((c: any) => ({
+    ...c.account,
+    publicKey: c.publicKey.toBase58(),
+    id: c.account.id.toNumber(),
+    start: formatDate(c.account.start.toNumber() * 1000),
+    end: formatDate(c.account.end.toNumber() * 1000),
+    candidates: c.account.candidates.toNumber(),
+  }));
+
+const formatDate = (d: number) => new Date(d).toLocaleDateString();

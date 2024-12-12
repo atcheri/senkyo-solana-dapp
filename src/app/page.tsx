@@ -1,54 +1,24 @@
 "use client";
 
 import { BN } from "@coral-xyz/anchor";
-import Polls from "@/components/polls";
+import Polls, { Poll } from "@/components/polls";
 import { useWallet } from "@solana/wallet-adapter-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
+  fetchPolls,
   getCounter,
   getReadOnlySolanaProvider,
   getSolanaProvider,
   initalizeTransaction,
 } from "./services/blockchain";
 
-const fetchedPolls = [
-  {
-    id: 1,
-    publicKey: "DummyPollKey1",
-    description: "Favorite Thing about Christmas",
-    start: new Date("2024-11-24T01:02:00").getTime(),
-    end: new Date("2024-11-28T02:03:00").getTime(),
-    candidates: 2,
-  },
-  {
-    id: 2,
-    publicKey: "DummyPollKey2",
-    description: "Best Sport in the World",
-    start: new Date("2024-12-01T00:00:00").getTime(),
-    end: new Date("2024-12-05T23:59:59").getTime(),
-    candidates: 5,
-  },
-  {
-    id: 3,
-    publicKey: "DummyPollKey3",
-    description: "Safest Country in the world",
-    start: new Date("2024-12-22T00:00:00").getTime(),
-    end: new Date("2024-12-25T23:59:59").getTime(),
-    candidates: 3,
-  },
-];
-
 export default function Page() {
   const [isInitialized, setIsInitialized] = useState(false);
   const { publicKey, signTransaction, sendTransaction } = useWallet();
   const programReadOnly = useMemo(() => getReadOnlySolanaProvider(), []);
-
-  const polls = fetchedPolls.map((p) => ({
-    ...p,
-    start: new Date(p.start).toLocaleDateString(),
-    end: new Date(p.end).toLocaleDateString(),
-  }));
+  const [polls, setPolls] = useState<Poll[]>([]);
+  console.log("polls:", polls);
 
   const program = useMemo(() => {
     if (!publicKey) {
@@ -61,12 +31,20 @@ export default function Page() {
   const fetchData = async () => {
     const count = await getCounter(programReadOnly);
     setIsInitialized(count.gte(new BN(0)));
+    if (!program) {
+      return;
+    }
+
+    fetchPolls(program).then(setPolls);
   };
 
   useEffect(() => {
-    if (!programReadOnly) return;
+    if (!programReadOnly) {
+      return;
+    }
+
     fetchData();
-  }, [programReadOnly]);
+  }, [programReadOnly, program]);
 
   const handleInit = async () => {
     if (isInitialized && !!publicKey) {
