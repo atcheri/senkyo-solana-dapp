@@ -85,9 +85,12 @@ export default function Page() {
 
   if (!publicKey) {
     return (
-      <p className="self-center">
-        We don&apos;t have any polls yet, please connect wallet.
-      </p>
+      <div className="flex flex-col gap-6">
+        <h1 className="self-center text-4xl">{":'("}</h1>
+        <p className="self-center">
+          We don&apos;t have any polls yet, please connect wallet.
+        </p>
+      </div>
     );
   }
 
