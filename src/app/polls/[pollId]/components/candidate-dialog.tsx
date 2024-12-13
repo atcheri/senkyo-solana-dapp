@@ -1,7 +1,6 @@
 import {
-  fetchAllCandidates,
-  fetchPollDetails,
   getSolanaProvider,
+  registerCandidate,
 } from "@/app/services/blockchain";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { FC, useMemo } from "react";
+import { FC, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { FaRegEdit } from "react-icons/fa";
@@ -49,11 +48,15 @@ const CandidateDialog: FC<CandidateDialogProps> = ({ pollAddress, pollId }) => {
       candidateName: "",
     },
   });
+  const [open, setOpen] = useState(false);
 
-  const program = useMemo(
-    () => getSolanaProvider(publicKey!, signTransaction, sendTransaction),
-    [publicKey, signTransaction, sendTransaction],
-  );
+  const program = useMemo(() => {
+    if (!publicKey) {
+      return;
+    }
+
+    return getSolanaProvider(publicKey, signTransaction, sendTransaction);
+  }, [publicKey, signTransaction, sendTransaction]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!program || !publicKey || !values.candidateName) return;
@@ -61,9 +64,14 @@ const CandidateDialog: FC<CandidateDialogProps> = ({ pollAddress, pollId }) => {
     await toast.promise(
       new Promise<void>(async (resolve, reject) => {
         try {
-          await fetchPollDetails(program, pollAddress);
-          await fetchAllCandidates(program, pollAddress);
+          await registerCandidate(
+            program,
+            publicKey,
+            pollId,
+            values.candidateName,
+          );
 
+          setOpen(false);
           resolve();
         } catch (error) {
           console.error("Transaction failed:", error);
@@ -79,7 +87,7 @@ const CandidateDialog: FC<CandidateDialogProps> = ({ pollAddress, pollId }) => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="space-x-2 rounded-full bg-gray-800 px-6 py-2 text-lg font-bold">
           Candidate

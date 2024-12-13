@@ -221,3 +221,53 @@ const formatCandidate = (candidate: any): Candidate => {
     name: candidate.name,
   };
 };
+
+export const registerCandidate = async (
+  program: Program<Senkyo>,
+  publicKey: PublicKey,
+  pollId: number,
+  name: string,
+): Promise<TransactionSignature> => {
+  const PID = new BN(pollId);
+  const [pollPda] = PublicKey.findProgramAddressSync(
+    [PID.toArrayLike(Buffer, "le", 8)],
+    programId,
+  );
+  const [registrationsPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("registrations")],
+    programId,
+  );
+
+  const regs = await program.account.registration.fetch(registrationsPda);
+  const CID = regs.count.add(new BN(1));
+
+  const [candidatePda] = PublicKey.findProgramAddressSync(
+    [PID.toArrayLike(Buffer, "le", 8), CID.toArrayLike(Buffer, "le", 8)],
+    programId,
+  );
+
+  const tx = await program.methods
+    .registerCandidate(PID, name)
+    .accountsPartial({
+      user: publicKey,
+      poll: pollPda,
+      registrations: registrationsPda,
+      candidate: candidatePda,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+
+  const connection = new Connection(
+    program.provider.connection.rpcEndpoint,
+    "confirmed",
+  );
+
+  const blockhash = await connection.getLatestBlockhash();
+  await connection.confirmTransaction({
+    signature: tx,
+    blockhash: blockhash.blockhash,
+    lastValidBlockHeight: blockhash.lastValidBlockHeight,
+  });
+
+  return tx;
+};
