@@ -85,8 +85,8 @@ export default function PollDetails() {
         {candidates.length > 0 && (
           <CandidateList
             candidates={candidates}
-            pollAddress={poll.publicKey}
             pollId={poll.id}
+            onVotedCallback={updatePageData}
           />
         )}
       </div>

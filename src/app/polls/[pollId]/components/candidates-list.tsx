@@ -1,30 +1,56 @@
+import {
+  getSolanaProvider,
+  hasUserVoted,
+  vote,
+} from "@/app/services/blockchain";
 import { Candidate } from "@/components/candidate";
-import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useWallet } from "@solana/wallet-adapter-react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-interface Props {
+interface CandidateListProps {
   candidates: Candidate[];
-  pollAddress: string;
   pollId: number;
+  onVotedCallback: () => Promise<void>;
 }
 
-const CandidateList = ({ candidates }: Props) => {
+const CandidateList: FC<CandidateListProps> = ({
+  candidates,
+  pollId,
+  onVotedCallback,
+}) => {
   const [voted, setVoted] = useState<boolean>(false);
+  const { publicKey, sendTransaction, signTransaction } = useWallet();
+
+  const fetchVotingStatus = async () => {
+    const status = await hasUserVoted(program!, publicKey!, pollId);
+    setVoted(status);
+  };
+
+  const program = useMemo(() => {
+    if (!publicKey) {
+      return;
+    }
+
+    return getSolanaProvider(publicKey, signTransaction, sendTransaction);
+  }, [publicKey, signTransaction, sendTransaction]);
+
+  useEffect(() => {
+    if (!program || !publicKey) return;
+
+    fetchVotingStatus();
+  }, [program, publicKey, candidates]);
 
   const handleVote = async (candidate: Candidate) => {
     if (voted) return;
 
     await toast.promise(
-      new Promise<void>((resolve, reject) => {
+      new Promise<void>(async (resolve, reject) => {
         try {
-          console.log(
-            `Voting for candidate: ${candidate.name} (ID: ${candidate.cid})`,
-          );
-          // Simulate voting success
-          setTimeout(() => {
-            setVoted(true);
-            resolve();
-          }, 1000);
+          await vote(program!, publicKey!, candidate.pollId, candidate.cid);
+          await fetchVotingStatus();
+          await onVotedCallback();
         } catch (error) {
           console.error("Voting failed:", error);
           reject(error);
@@ -48,16 +74,14 @@ const CandidateList = ({ candidates }: Props) => {
           >
             <span className="font-medium text-gray-800">{candidate.name}</span>
             <span className="flex items-center space-x-2 text-sm text-gray-600">
-              <button
+              <Button
                 onClick={() => handleVote(candidate)}
-                className={`px-2 py-1 bg-${voted ? "red" : "green"}-100 text-${
-                  voted ? "red" : "green"
-                }-700 ${!voted && "hover:bg-green-200"} rounded`}
+                variant="secondary"
                 disabled={voted}
               >
                 {voted ? "Voted" : "Vote"}{" "}
                 <span className="font-semibold">{candidate.votes}</span>
-              </button>
+              </Button>
             </span>
           </div>
         ))}
