@@ -208,7 +208,14 @@ export const fetchAllCandidates = async (
     return candidate.account.pollId.eq(PID);
   });
 
-  return candidates.map(formatCandidate);
+  return formatCandidates(candidates);
+};
+
+const formatCandidates = (candidates: any[]): Candidate[] => {
+  return candidates.map((c) => ({
+    ...c.account,
+    ...formatCandidate({ ...c.account, publicKey: c.publicKey }),
+  }));
 };
 
 const formatCandidate = (candidate: any): Candidate => {

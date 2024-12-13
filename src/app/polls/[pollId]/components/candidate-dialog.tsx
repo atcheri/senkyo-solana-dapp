@@ -32,6 +32,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 type CandidateDialogProps = {
   pollId: number;
   pollAddress: string;
+  onSuccess: () => Promise<void>;
 };
 
 const formSchema = z.object({
@@ -40,7 +41,11 @@ const formSchema = z.object({
   }),
 });
 
-const CandidateDialog: FC<CandidateDialogProps> = ({ pollAddress, pollId }) => {
+const CandidateDialog: FC<CandidateDialogProps> = ({
+  pollAddress,
+  pollId,
+  onSuccess,
+}) => {
   const { publicKey, sendTransaction, signTransaction } = useWallet();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,6 +76,7 @@ const CandidateDialog: FC<CandidateDialogProps> = ({ pollAddress, pollId }) => {
             values.candidateName,
           );
 
+          await onSuccess();
           setOpen(false);
           resolve();
         } catch (error) {

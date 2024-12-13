@@ -1,55 +1,42 @@
 "use client";
 
 import {
+  fetchAllCandidates,
   fetchPollDetails,
   getReadOnlySolanaProvider,
 } from "@/app/services/blockchain";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { useAtom } from "jotai";
 import { useParams } from "next/navigation";
 import React, { useEffect, useMemo } from "react";
-import { FaRegEdit } from "react-icons/fa";
 import { pollAtom } from "./state";
-import { Candidate } from "@/components/candidate";
+import { candidatesAtom } from "@/components/candidate";
 import CandidateList from "./components/candidates-list";
 import CandidateDialog from "./components/candidate-dialog";
 
-const candidates: Candidate[] = [
-  {
-    publicKey: "dummy_public_key_1",
-    cid: 1001,
-    pollId: 101,
-    name: "Candidate A",
-    votes: 0,
-    hasRegistered: false,
-  },
-  {
-    publicKey: "dummy_public_key_2",
-    cid: 1002,
-    pollId: 101,
-    name: "Candidate B",
-    votes: 0,
-    hasRegistered: false,
-  },
-];
-
 export default function PollDetails() {
   const { pollId } = useParams();
-  const { publicKey } = useWallet();
   const [poll, setPoll] = useAtom(pollAtom);
+  const [candidates, setCandidates] = useAtom(candidatesAtom);
 
   const program = useMemo(() => getReadOnlySolanaProvider(), []);
+
+  const fetchPageData = async () => {
+    return Promise.all([
+      fetchPollDetails(program, pollId as string),
+      fetchAllCandidates(program, pollId as string),
+    ]);
+  };
+
+  const updatePageData = async () => {
+    const [pollDetails, candidates] = await fetchPageData();
+    setPoll(pollDetails);
+    setCandidates(candidates);
+  };
 
   useEffect(() => {
     if (!program || !pollId) return;
 
-    const fetchDetails = async () => {
-      const pollDetail = await fetchPollDetails(program, pollId as string);
-      setPoll(pollDetail);
-      //   await fetchAllCandidates(program, pollId as string);
-    };
-
-    fetchDetails();
+    updatePageData();
   }, [program, pollId]);
 
   if (!poll) {
@@ -89,7 +76,11 @@ export default function PollDetails() {
           </div>
         </div>
 
-        <CandidateDialog pollId={poll.id} pollAddress={poll.publicKey} />
+        <CandidateDialog
+          pollId={poll.id}
+          pollAddress={poll.publicKey}
+          onSuccess={updatePageData}
+        />
 
         {candidates.length > 0 && (
           <CandidateList
@@ -99,8 +90,6 @@ export default function PollDetails() {
           />
         )}
       </div>
-
-      {/* {pollId && <RegCandidate pollId={poll.id} pollAddress={poll.publicKey} />} */}
     </>
   );
 }
