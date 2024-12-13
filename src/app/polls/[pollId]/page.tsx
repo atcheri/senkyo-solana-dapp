@@ -12,6 +12,7 @@ import { FaRegEdit } from "react-icons/fa";
 import { pollAtom } from "./state";
 import { Candidate } from "@/components/candidate";
 import CandidateList from "./components/candidates-list";
+import CandidateDialog from "./components/candidate-dialog";
 
 const candidates: Candidate[] = [
   {
@@ -88,19 +89,7 @@ export default function PollDetails() {
           </div>
         </div>
 
-        {publicKey ? (
-          <button
-            className="flex items-center justify-center space-x-2 rounded-full bg-gray-800 px-6 py-2 text-lg font-bold text-white"
-            // onClick={() => dispatch(setRegModal("scale-100"))}
-          >
-            <span>Candidates</span>
-            <FaRegEdit />
-          </button>
-        ) : (
-          <button className="flex items-center justify-center space-x-2 rounded-full bg-gray-800 px-6 py-2 text-lg font-bold text-white">
-            <span>Candidates</span>
-          </button>
-        )}
+        <CandidateDialog pollId={poll.id} pollAddress={poll.publicKey} />
 
         {candidates.length > 0 && (
           <CandidateList
