@@ -49,6 +49,8 @@ export default function PollDetails() {
     );
   }
 
+  const active = new Date(poll.start) <= new Date();
+
   return (
     <>
       <div className="flex flex-col items-center space-y-6 py-10">
@@ -84,6 +86,7 @@ export default function PollDetails() {
 
         {candidates.length > 0 && (
           <CandidateList
+            active={active}
             candidates={candidates}
             pollId={poll.id}
             onVotedCallback={updatePageData}
