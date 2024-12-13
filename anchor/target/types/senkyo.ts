@@ -181,11 +181,8 @@ export type Senkyo = {
           "writable": true
         },
         {
-          "name": "counter",
-          "writable": true
-        },
-        {
           "name": "registrations",
+          "writable": true,
           "pda": {
             "seeds": [
               {

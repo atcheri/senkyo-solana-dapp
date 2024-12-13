@@ -54,10 +54,7 @@ pub struct RegisterCandidate<'info> {
     )]
     pub candidate: Account<'info, Candidate>,
 
-    #[account(mut)]
-    pub counter: Account<'info, Counter>,
-
-    #[account(seeds = [b"registrations"], bump)]
+    #[account(mut, seeds = [b"registrations"], bump)]
     pub registrations: Account<'info, Registration>,
 
     pub system_program: Program<'info, System>,
